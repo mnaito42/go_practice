@@ -18,6 +18,7 @@ func main(){
 	http.HandleFunc("/math", mathfuncs)
 	http.HandleFunc("/arrays", arrays)
 	http.HandleFunc("/slices", slices)
+	http.HandleFunc("/struct_members", struct_members)
 	http.ListenAndServe(":8090", nil)
 }
 
@@ -75,4 +76,61 @@ func slices(writer http.ResponseWriter,
 	req *http.Request){
 
 	sl :=[]int{30, 45, 60, 90, 180}
+
+	var rad_v float64
+
+	for _, v := range sl{
+		rad_v = float64(v)*math.Pi/180.0
+		fmt.Fprintf(writer, "sin%dは %.3f\n\n", v, math.Sin(rad_v))
+	}
+
+	fmt.Fprintln(writer, "\n***スライスなら要素を増やせる！***")
+	sl=append(sl, 225, 275, 360)
+	fmt.Fprintln(writer, sl)
+
+	fmt.Fprintln(writer, "\n***スライスの一部を参照するスライス***")
+	sl_sl := sl[2:5]
+	fmt.Fprintln(writer, sl_sl)
+}
+
+type member struct {
+	name string
+	point int
+	coeff float64
+}
+
+type vip struct {
+	member
+	vip_point int
+}
+
+func struct_members(writer http.ResponseWriter,
+	req *http.Request){
+
+	fmt.Fprintln(writer, "***構造体memberのインスタンス***")
+	yumiko := member{"ゆみこ", 56, 1.24}
+
+	toshio := member{}
+	toshio.name= "トシオ"
+	toshio.point=44
+	toshio.coeff=0.98
+
+	members := []member{yumiko,toshio}
+
+	effective := "%sさんの有効ポイントは%.2f\n"
+
+	for _, v := range members{
+		fmt.Fprintf(writer, effective, v.name, float64(v.point)*v.coeff,
+		)
+	}
+
+	fmt.Fprintln(writer, "\n***構造体を埋め込んだ構造体***")
+	vip_yumiko := vip{yumiko, 30}
+
+	vip_point := vip_yumiko.member.point+vip_yumiko.vip_point
+	fmt.Fprintf(writer, "%sさんはVIPなのでポイントは%d点",
+		vip_yumiko.member.name, vip_point)
+
+	vip_effective_point := float64(vip_point)*vip_yumiko.member.coeff
+	fmt.Fprintf(writer, "有効ポイントは%.2f点\n", vip_effective_point)
 }
